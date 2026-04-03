@@ -1,10 +1,7 @@
-import { getCurrentOrg } from "@/actions/organizations/organisations";
+import { checkUserMembership, getCurrentOrg } from "@/actions/organizations/organisations";
 import { getCurrentUser, getUserOrg } from "@/actions/users/users";
-import { db } from "@/drizzle/db/db";
-import { memberships } from "@/drizzle/schema";
 import { AppRole, assertPermission, Permission } from "@/lib/permissions";
 import { ActionResult } from "@/lib/types/actions";
-import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation"
 
 export type { ActionResult } from "@/lib/types/actions"
@@ -44,19 +41,19 @@ export async function safeAction<T>(
   }
 }
 
-export async function requireUserContext() {
+export async function requireUserContext(orgId?: string) {
   const user = await getCurrentUser()
   if (!user) redirect("/auth/login")
 
   const userOrg = await getUserOrg(user.id)
   if (!userOrg) redirect("/organization/onboarding")
 
-  const org = await getCurrentOrg(userOrg.organizationId)
+  const resolvedOrgId = orgId ?? userOrg.organizationId
+
+  const org = await getCurrentOrg(resolvedOrgId)
   if (!org) redirect("/organization/onboarding")
 
-  const member = await db.query.memberships.findFirst({
-    where: eq(memberships.userId, user.id)
-  })
+  const member = await checkUserMembership(user.id, org.id)
   if(!member) redirect("/organization/onboarding")
 
   return {
@@ -67,8 +64,8 @@ export async function requireUserContext() {
   }
 }
 
-export async function requirePermission(permission: Permission) {
-  const context = await requireUserContext()
+export async function requirePermission(permission: Permission, orgId?: string) {
+  const context = await requireUserContext(orgId)
   assertPermission(context.member.role as AppRole, permission)
   return context
 }

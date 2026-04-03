@@ -6,7 +6,7 @@ import { Notes } from "@/components/clients/tabs/notes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/drizzle/db/db";
 import { clients } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 type Props = {
   params: Promise<{
@@ -19,7 +19,10 @@ export default async function ClientPage({ params }: Props) {
   const { clientId, orgId } = await params;
 
   const client = await db.query.clients.findFirst({
-    where: eq(clients.id, clientId),
+    where: and(
+      eq(clients.id, clientId),
+      eq(clients.organizationId, orgId)
+    ),
   });
 
   if (!client) {

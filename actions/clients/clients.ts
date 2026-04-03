@@ -8,8 +8,8 @@ import { ActionResult, requirePermission, requireUserContext, safeAction } from 
 import { createClientActivity } from "./client-activities";
 import { AddNotesInput, CreateClientInput, UpdateClientInput, UpdateNoteInput } from "@/lib/types/clients";
 
-export async function getClients(): Promise<ClientWithRelations[]> {
-  const { org } = await requireUserContext()
+export async function getClients(orgId?: string): Promise<ClientWithRelations[]> {
+  const { org } = await requireUserContext(orgId)
   try {
     const allClients = await db.query.clients.findMany({
       where: eq(clients.organizationId, org.id),
@@ -27,9 +27,9 @@ export async function getClients(): Promise<ClientWithRelations[]> {
   }
 }
 
-export async function getClient(clientId: string): Promise<ActionResult<Client>> {
-  try {
-    const { org } = await requireUserContext()
+export async function getClient(clientId: string, orgId?: string): Promise<ActionResult<Client>> {
+  return safeAction(async () => {
+    const { org } = await requireUserContext(orgId)
     const client = await db.query.clients.findFirst({
       where: and(
         eq(clients.id, clientId),
@@ -38,24 +38,13 @@ export async function getClient(clientId: string): Promise<ActionResult<Client>>
     })
 
     if (!client) {
-      return {
-        success: false,
-        message: "Aucun client trouvé"
-      }
+      throw new Error("Aucun client trouvé")
     }
 
-    return {
-      success: true,
-      data: client
-    }
-
-  } catch (error) {
-    console.error(error)
-    return {
-      success: false,
-      message: "Erreur serveur"
-    }
-  }
+    return client
+  }, {
+    errorMessage: "Erreur serveur"
+  })
 }
 
 export async function createClient(data: CreateClientInput) {
@@ -143,8 +132,6 @@ export async function updateClient(data: UpdateClientInput) {
       throw new Error("Client non trouvé ou accès non autorisé")
     }
 
-    const updatedFieldsList = Object.keys(fieldsToUpdate).join(", ")
-
     await createClientActivity({
       clientId: updatedClient.id,
       organizationId: org.id,
@@ -217,9 +204,9 @@ export async function addNotes(data: AddNotesInput, clientId: string) {
   })
 }
 
-export async function getClientActivities(clientId: string) {
+export async function getClientActivities(clientId: string, orgId?: string) {
   return safeAction(async () => {
-    const { org } = await requireUserContext()
+    const { org } = await requireUserContext(orgId)
 
     if (!clientId) {
       throw new Error("Client ID requis")
@@ -246,9 +233,9 @@ export async function getClientActivities(clientId: string) {
   })
 }
 
-export async function getClientNotes(clientId: string) {
+export async function getClientNotes(clientId: string, orgId?: string) {
   return safeAction(async () => {
-    const { org } = await requireUserContext()
+    const { org } = await requireUserContext(orgId)
 
     if (!clientId) {
       throw new Error("Client ID requis")
@@ -279,7 +266,10 @@ export async function updateNote({ notes, noteId }: UpdateNoteInput) {
   return safeAction(async () => {
     const { member, org } = await requirePermission("clients.manage")
     const [updated] = await db.update(clientNotes)
-      .set({ notes })
+      .set({
+        notes,
+        memberId: member.id,
+      })
       .where(
         and(
           eq(clientNotes.id, noteId),

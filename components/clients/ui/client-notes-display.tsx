@@ -6,27 +6,21 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMutation } from "@/hooks/use-mutations"
 import { updateNote, deleteNote } from "@/actions/clients/clients"
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog"
-import { ClientWithRelations, MembershipWithUser } from "@/drizzle/schema"
 import { AddNotes } from "../forms/add-notes";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatDate } from "@/lib/formatters/formatters"
+import type { ClientNote, ClientNotesDisplayProps } from "@/lib/types/clients"
 
-type ClientNote = {
-  id: string
-  clientId: string
-  organizationId: string
-  notes: string
-  createdAt: Date
-  updatedAt: Date
-  memberships: MembershipWithUser
+function getNoteDateLabel(note: ClientNote) {
+  const createdAt = new Date(note.createdAt)
+  const updatedAt = new Date(note.updatedAt)
+  const isUpdated = updatedAt > createdAt
+
+  return `${isUpdated ? "Modifiée" : "Créée"} le ${formatDate(isUpdated ? updatedAt : createdAt)}`
 }
 
-type Props = {
-  notes: ClientNote[]
-  client: ClientWithRelations
-}
-
-export function ClientNotesDisplay({ notes, client }: Props) {
+export function ClientNotesDisplay({ notes, client }: ClientNotesDisplayProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState("")
 
@@ -141,9 +135,7 @@ export function ClientNotesDisplay({ notes, client }: Props) {
               )}
             </div>
             <span className="text-xs text-muted-foreground">
-              {new Date(note.updatedAt) > new Date(note.createdAt)
-                ? `Modifiée le ${new Date(note.updatedAt).toLocaleString()}`
-                : `Créée le ${new Date(note.createdAt).toLocaleString()}`}{" "}
+              {getNoteDateLabel(note)}{" "}
               par {note.memberships?.user?.name || "Inconnu"}
             </span>
           </div>

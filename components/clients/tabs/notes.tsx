@@ -15,12 +15,12 @@ export async function Notes({ params } : Props) {
     if(!clientId) redirect(`/organization/${orgId}/clients`)
     
 
-    const result = await getClient(clientId)
+    const result = await getClient(clientId, orgId)
     if (!result.success) {
         redirect(`/organization/${orgId}/clients`)
     }
 
-    const clientNotes = await getClientNotes(clientId)
+    const clientNotes = await getClientNotes(clientId, orgId)
     if(!clientNotes.success) { 
         return (
             <p>{clientNotes.message}</p>

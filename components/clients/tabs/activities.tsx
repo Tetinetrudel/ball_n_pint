@@ -14,7 +14,7 @@ export async function Activities({ params }: Props) {
     redirect(`/organization/${orgId}/clients`)
   }
 
-  const result = await getClientActivities(clientId)
+  const result = await getClientActivities(clientId, orgId)
 
   if (!result.success) {
     return <p>{result.message}</p>
