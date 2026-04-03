@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1773956591189,
+      "tag": "0000_closed_micromax",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773979600327,
+      "tag": "0001_dizzy_thunderbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775188800000,
+      "tag": "0002_mature_client_activities",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775199600000,
+      "tag": "0003_nice_password_reset_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775203200000,
+      "tag": "0004_add_admin_membership_role",
+      "breakpoints": true
+    }
+  ]
+}
