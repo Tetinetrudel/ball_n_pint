@@ -9,14 +9,14 @@ type Props = {
     children: React.ReactNode,
     params: Promise<{ orgId: string}>
 }
-export default async function Orglayout({ children, params } : Props) {
+export default async function OrganizationLayout({ children, params } : Props) {
     const { orgId } = await params
 
     const user = await getCurrentUser()
     if(!user) redirect("/auth/login")
     
     const membership = await checkUserMembership(user.id, orgId)
-    if(membership === false) redirect("/organization/onboarding")
+    if(!membership) redirect("/organization/onboarding")
 
     const org = await getCurrentOrg(orgId)
     if(!org) redirect("/organization/onboarding")
@@ -24,7 +24,7 @@ export default async function Orglayout({ children, params } : Props) {
     return (
         <OrgProvider org={org}>
             <UserProvider user={user}>
-                <OrgLayoutClient orgId={orgId}>
+                <OrgLayoutClient orgId={orgId} role={membership.role}>
                     {children}
                 </OrgLayoutClient>
             </UserProvider>

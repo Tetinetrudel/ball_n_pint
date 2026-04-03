@@ -29,7 +29,8 @@ export async function signUp(data: SignUpFormType) {
       name: parsed.name,
       email: parsed.email,
       password: hashedPassword,
-      imageUrl: null
+      imageUrl: null,
+      lastLoginAt: new Date(),
     }).returning()
 
     const token = crypto.randomUUID()

@@ -8,9 +8,11 @@ import { useEffect, useState } from "react";
 export function OrgLayoutClient({
   children,
   orgId,
+  role,
 }: {
   children: React.ReactNode;
   orgId: string;
+  role: "owner" | "admin" | "staff";
 }) {
   const { collapsed, toggle } = useSidebar();
   const [mounted, setMounted] = useState(false)
@@ -23,7 +25,7 @@ export function OrgLayoutClient({
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar collapsed={collapsed} toggle={toggle} orgId={orgId} />
+      <Sidebar collapsed={collapsed} toggle={toggle} orgId={orgId} role={role} />
       <div className="flex-1 py-2">
         <Header />
         <main>{children}</main>

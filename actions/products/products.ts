@@ -1,24 +1,15 @@
 "use server"
 
 import { db } from "@/drizzle/db/db";
-import { categories, Category, Product, products, ProductWithRelations } from "@/drizzle/schema";
+import { categories, Category, products, ProductWithRelations } from "@/drizzle/schema";
 
-import { and, desc, eq, InferInsertModel, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requirePermission, requireUserContext, safeAction } from "@/lib/helpers";
 import { normalizeText } from "@/lib/utils/normalize-text";
+import { CreateCategoryInput, CreateProductInput, UpdateProductInput } from "@/lib/types/products";
 
-type CreateProductInput = Pick<
-  Product,
-  "name" | "price" | "categoryId" | "description" | "favorite" | "imageUrl"
->;
-
-type UpdateProductInput =
-  { id: string } & Partial<
-    Omit<InferInsertModel<typeof products>, "id" | "organizationId" | "createdAt">
-  >;
-
-export async function createCategory(data: { name: string }) {
+export async function createCategory(data: CreateCategoryInput) {
   return safeAction(async () => {
     const { org } = await requirePermission("products.manage")
     const normalizedName = normalizeText(data.name)

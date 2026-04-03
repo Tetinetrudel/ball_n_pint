@@ -2,13 +2,15 @@
 
 import { db } from "@/drizzle/db/db"
 import { invitations, InvitationWithOrg, memberships, organizations, MembershipsWithUserAndOrg, users } from "@/drizzle/schema"
-import { and, eq, ilike } from "drizzle-orm"
+import { and, desc, eq, ilike } from "drizzle-orm"
 import { getCurrentUser } from "../users/users";
 import { requirePermission, requireUserContext, safeAction } from "@/lib/helpers";
 import { inviteMemberFormSchema, InviteMemberFormType } from "@/lib/schemas/organization";
 import { sendEmailWithResend } from "@/lib/resend/client";
 import { organizationInviteEmailTemplate } from "@/lib/resend/templates/organization-invite";
 import { AppRole, canAssignRole } from "@/lib/permissions";
+import { revalidatePath } from "next/cache";
+import { OrganizationEmployee } from "@/lib/types/organization";
 
 export async function getInvitationForUser(userEmail: string): Promise<InvitationWithOrg | null> {
     try {
@@ -99,14 +101,12 @@ export async function getCurrentOrg(orgId: string) {
 }
 
 export async function checkUserMembership(userId: string, orgId: string) {
-  const membership = await db.query.memberships.findFirst({
+  return db.query.memberships.findFirst({
     where: and(
       eq(memberships.userId, userId),
       eq(memberships.organizationId, orgId)
     ),
   });
-
-  return !!membership; 
 }
 
 function buildSignupInviteUrl(email: string) {
@@ -171,6 +171,32 @@ export async function inviteMember(data: InviteMemberFormType) {
   })
 }
 
+export async function getOrganizationEmployees() {
+  return safeAction(async () => {
+    const { org } = await requirePermission("members.invite")
+
+    const organizationMembers = await db.query.memberships.findMany({
+      where: eq(memberships.organizationId, org.id),
+      with: {
+        user: true,
+      },
+      orderBy: [desc(memberships.createdAt)],
+    })
+
+    return organizationMembers.map((membership) => ({
+      membershipId: membership.id,
+      userId: membership.userId,
+      name: membership.user.name,
+      email: membership.user.email,
+      role: membership.role as AppRole,
+      createdAt: membership.createdAt,
+      lastLoginAt: membership.user.lastLoginAt,
+    })) satisfies OrganizationEmployee[]
+  }, {
+    errorMessage: "Erreur lors de la récupération des employés",
+  })
+}
+
 export async function updateMemberRole(input: { membershipId: string; role: AppRole }) {
   return safeAction(async () => {
     const { org, member } = await requirePermission("members.role.update")
@@ -191,6 +217,14 @@ export async function updateMemberRole(input: { membershipId: string; role: AppR
       throw new Error("Membre introuvable")
     }
 
+    if (targetMembership.userId === org.ownerId && input.role !== "owner") {
+      throw new Error("Le propriétaire ne peut pas être rétrogradé")
+    }
+
+    if (input.role === "owner" && targetMembership.userId !== org.ownerId) {
+      throw new Error("Le transfert de propriété n'est pas disponible pour le moment")
+    }
+
     if (actorRole === "admin" && targetMembership.role === "owner") {
       throw new Error("Un admin ne peut pas modifier le rôle du propriétaire")
     }
@@ -203,6 +237,8 @@ export async function updateMemberRole(input: { membershipId: string; role: AppR
         eq(memberships.organizationId, org.id)
       ))
       .returning()
+
+    revalidatePath(`/organization/${org.id}/settings`)
 
     return updatedMembership
   }, {

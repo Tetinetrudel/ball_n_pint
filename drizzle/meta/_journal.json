@@ -36,6 +36,13 @@
       "when": 1775203200000,
       "tag": "0004_add_admin_membership_role",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775206800000,
+      "tag": "0005_memberships_created_at_and_users_last_login",
+      "breakpoints": true
     }
   ]
 }

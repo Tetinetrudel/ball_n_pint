@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartLineIcon, LayoutDashboard, Settings, ChevronLeft, ChevronRight, BubblesIcon, Users, Package, ChartLine } from "lucide-react";
+import { ChartLineIcon, LayoutDashboard, Settings, ChevronLeft, ChevronRight, BubblesIcon, Users, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AppRole, hasPermission } from "@/lib/permissions";
 
 type Props = {
   collapsed: boolean;
   toggle: () => void;
   orgId: string;
+  role: AppRole;
 };
 
-export function Sidebar({ collapsed, toggle, orgId }: Props) {
+export function Sidebar({ collapsed, toggle, orgId, role }: Props) {
   const pathname = usePathname();
 
   const links = [
@@ -19,11 +21,6 @@ export function Sidebar({ collapsed, toggle, orgId }: Props) {
       label: "Dashboard",
       href: `/organization/${orgId}/dashboard`,
       icon: LayoutDashboard,
-    },
-    {
-      label: "Settings",
-      href: `/organization/${orgId}/settings`,
-      icon: Settings,
     },
     {
       label: "Clients",
@@ -41,6 +38,15 @@ export function Sidebar({ collapsed, toggle, orgId }: Props) {
       icon: ChartLineIcon,
     },
   ];
+
+  const shouldShowSettings = hasPermission(role, "members.invite")
+  if (shouldShowSettings) {
+    links.splice(1, 0, {
+      label: "Settings",
+      href: `/organization/${orgId}/settings`,
+      icon: Settings,
+    })
+  }
 
   return (
     <aside

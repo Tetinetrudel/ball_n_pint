@@ -3,12 +3,11 @@ import { getCurrentUser, getUserOrg } from "@/actions/users/users";
 import { db } from "@/drizzle/db/db";
 import { memberships } from "@/drizzle/schema";
 import { AppRole, assertPermission, Permission } from "@/lib/permissions";
+import { ActionResult } from "@/lib/types/actions";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation"
 
-export type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; message: string }
+export type { ActionResult } from "@/lib/types/actions"
 
 export async function safeAction<T>(
   fn: () => Promise<T>,

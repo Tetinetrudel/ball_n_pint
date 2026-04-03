@@ -1,6 +1,7 @@
 import { pgTable, uuid, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import type { InferModel } from "drizzle-orm";
+import { createdAt } from "@/drizzle/drizzle-helpers";
 import { Organization, organizations } from "./organizations";
 
 export const users = pgTable("users", {
@@ -8,7 +9,8 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   password: text("password_hash").notNull(),
-  imageUrl: text("imageUrl")
+  imageUrl: text("imageUrl"),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
 });
 
 export const userRelations = relations(users, ({ many }) => ({
@@ -30,6 +32,7 @@ export const memberships = pgTable("memberships", {
   userId: uuid("user_id").notNull(),
   organizationId: uuid("organization_id").notNull(),
   role: MembershipRoles("role").notNull().default("staff"),
+  createdAt,
 });
 
 export const membershipRelations = relations(memberships, ({ one }) => ({
@@ -78,6 +81,7 @@ export type Membership = {
     userId: string;
     organizationId: string;
     role: string
+    createdAt: Date
 };
 
 export type Session = {
@@ -103,6 +107,7 @@ export type MembershipsWithUserAndOrg = {
     email: string
     password: string
     imageUrl: string | null
+    lastLoginAt: Date | null
   }
   organization: {
     id: string

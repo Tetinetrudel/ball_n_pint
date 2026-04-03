@@ -1,28 +1,12 @@
 "use server"
 
 import { db } from "@/drizzle/db/db";
-import { Client, clientActivities, clientNotes, ClientNotes, clients, ClientWithRelations } from "@/drizzle/schema";
+import { Client, clientActivities, clientNotes, clients, ClientWithRelations } from "@/drizzle/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { ActionResult, requirePermission, requireUserContext, safeAction } from "@/lib/helpers";
 import { createClientActivity } from "./client-activities";
-
-type UpdateNoteInput = {
-  notes: string
-  noteId: string
-}
-
-type CreateClientInput = Pick<
-  Client,
-  "name" | "email" 
->;
-
-type UpdateClientInput = Pick<
-  Client,
-  "id" | "name" | "email" 
->;
-
-type AddNotesInput = Pick<ClientNotes, "notes">
+import { AddNotesInput, CreateClientInput, UpdateClientInput, UpdateNoteInput } from "@/lib/types/clients";
 
 export async function getClients(): Promise<ClientWithRelations[]> {
   const { org } = await requireUserContext()

@@ -5,17 +5,8 @@ import { clients, invoices, invoiceItems, products, clientCards } from "@/drizzl
 import { requirePermission, requireUserContext, safeAction } from "@/lib/helpers"
 import { revalidatePath } from "next/cache"
 import { and, eq, inArray } from "drizzle-orm";
-import { InvoiceWithItems } from "@/lib/types"
+import { CreateInvoiceInput, InvoiceWithItems } from "@/lib/types"
 import { createClientActivity } from "../clients/client-activities";
-
-type CreateInvoiceInput = {
-  clientId: string
-  items: {
-    productId: string
-    quantity: number
-    price: number
-  }[]
-}
 
 export async function createInvoice(input: CreateInvoiceInput) {
   return safeAction(async () => {

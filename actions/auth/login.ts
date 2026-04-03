@@ -28,6 +28,11 @@ export async function login(data: { email: string; password: string }) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    await db
+      .update(users)
+      .set({ lastLoginAt: new Date() })
+      .where(eq(users.id, user.id))
+
     await db.insert(sessions).values({
       userId: user.id,
       token,
